@@ -12,8 +12,16 @@ from RaspberryInterface import RaspberryInterface
 from MyMerger import Files_merge
 import tkinter as tk
 from tkinter import filedialog
+import logging
 
-# ---------------- CONFIG ----------------
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s'
+)
+
+
+# %% ---------------- CONFIG ----------------
 CHANNEL_LINMOT_ENABLE = "Dev1/ai0"
 CHANNEL_LINMOT_UP_DOWN = "Dev1/ai1"
 CHANNEL_TENG = "Dev1/ai2"
@@ -29,7 +37,8 @@ refresh_rate = 10
 
 moveLinMot = False
 
-# ---------------- BUFFER PROCESSING THREAD ----------------
+
+# %% ---------------- BUFFER PROCESSING THREAD ----------------
 class BufferProcessor(QObject):
     process_buffer = pyqtSignal(object)
 
@@ -53,9 +62,10 @@ class BufferProcessor(QObject):
             })
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             df.to_pickle(f"{self.local_path}/DAQ_{timestamp}.pkl")
-            print(f"[+] Saved {len(data)} samples")
+            logging.info(f"[+] Saved {len(data)} samples")
 
-# ---------------- DAQ TASK WITH CALLBACK ----------------
+
+# %% ---------------- DAQ TASK WITH CALLBACK ----------------
 class DAQTask(Task):
     def __init__(self, plot_buffer, processor_signal):
         super().__init__()
@@ -104,7 +114,8 @@ class DAQTask(Task):
 
         return 0
 
-# ---------------- INTERFACE AND PLOT  ----------------
+
+# %% ---------------- INTERFACE AND PLOT  ----------------
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -206,7 +217,7 @@ class MainWindow(QWidget):
                 loop_counter += 1
 
             if loop_counter >= 10000:
-                print("\033[91mError loop counter overflow, raspberry is not responding\033[0m")
+                logging.info("\033[91mError loop counter overflow, raspberry is not responding\033[0m")
                 return
 
             self.raspberry.execute.emit(lambda: self.raspberry.download_folder(self.remote_path, local_path=self.processor.local_path))
@@ -217,7 +228,7 @@ class MainWindow(QWidget):
                 Files_merge(folder_path=self.processor.local_path, save_path_folder=self.processor.local_path)
 
         else:
-            print("Please provide a save location for incoming data.")
+            logging.info("Please provide a save location for incoming data.")
             root = tk.Tk()
             root.withdraw()
             root.lift()
@@ -227,7 +238,7 @@ class MainWindow(QWidget):
             self.processor.timestamp = 0
 
             if not self.processor.local_path:
-                print("Canceled.")
+                logging.info("Canceled.")
                 return
 
             self.processor.local_path = self.processor.local_path.replace("/", "\\")
@@ -246,17 +257,17 @@ class MainWindow(QWidget):
                 elif status_bit_0 == 0 and status_bit_1 == 1:
                     self.DO_task_PrepareRaspberry.set_line(0)
                     self.raspberry.execute.emit(lambda: self.raspberry.reset_codesys())
-                    print("\033[91mError, impossible to prepare raspberry to record, check codesys invalid license error. Resetting Codesys, please wait... \033[0m")
+                    logging.info("\033[91mError, impossible to prepare raspberry to record, check codesys invalid license error. Resetting Codesys, please wait... \033[0m")
                     return
                 else:
                     self.DO_task_PrepareRaspberry.set_line(0)
                     self.raspberry.execute.emit(lambda: self.raspberry.reset_codesys())
-                    print("\033[91mError, EtherCAT bus is not working, resetting Codesys, please wait...\033[0m")
+                    logging.info("\033[91mError, EtherCAT bus is not working, resetting Codesys, please wait...\033[0m")
                     return
 
             if loop_counter >= 10000:
                 self.DO_task_PrepareRaspberry.set_line(0)
-                print("\033[91mError loop counter overflow, raspberry is not responding\033[0m")
+                logging.info("\033[91mError loop counter overflow, raspberry is not responding\033[0m")
                 return
 
             self.task.index = 0
@@ -265,7 +276,8 @@ class MainWindow(QWidget):
         moveLinMot = not moveLinMot
         self.button.setText("STOP LinMot" if moveLinMot else "START LinMot")
 
-# ---------------- DIGITAL IO TASKS ----------------
+
+# %% ---------------- DIGITAL IO TASKS ----------------
 class DigitalOutputTask(Task):
     def __init__(self, line="Dev1/port0/line7"):
         super().__init__()
@@ -287,7 +299,8 @@ class DigitalInputTask(Task):
         self.ReadDigitalLines(1, 10.0, 0, data, 1, read, None, None)
         return data[0]
 
-# ---------------- MAIN ----------------
+
+# %% ---------------- MAIN ----------------
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()

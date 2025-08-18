@@ -224,7 +224,7 @@ def LoadFiles():
     #     logging.error(f'DAQ file {ExpDef.DaqFile} could not be processed')
     #     return None
     
-    print("Please select the folder where the data files are stored.")
+    logging.info("Please select the folder where the data files are stored.")
     root = tk.Tk()
     root.withdraw()
     root.lift()
@@ -238,22 +238,22 @@ def LoadFiles():
         for f in os.listdir(path):
             full_path = os.path.join(path, f)
             if f == 'Motor_01.csv':
-                print(f"Loading motor data file: {full_path}")
+                logging.info(f"Loading motor data file: {full_path}")
                 dfMot = LoadMotorFile(full_path)
             elif f == 'DAQ_01.pkl':
-                print(f"Loading DAQ data file: {full_path}")
+                logging.info(f"Loading DAQ data file: {full_path}")
                 dfDaq = LoadDAQFile(full_path)
     else:
-        print("No folder was selected. Operation cancelled.")
-        return
-
+        logging.info("No folder was selected. Operation cancelled.")
+        return pd.DataFrame(), [[]]
+    
     # Motor sampling rate
     MotFs = 1 / dfMot['Time'].diff().mean()
-    print(f'Motor sampling rate: {MotFs}')
+    logging.info(f'Motor sampling rate: {MotFs}')
     
     # DAQ sampling rate
     DaqFs = 1 / dfDaq['Time'].diff().mean()
-    print(f'DAQ sampling rate: {DaqFs}')
+    logging.info(f'DAQ sampling rate: {DaqFs}')
                     
     # Finding cycles
     MotCycles = FindCycles(dfMot['State'])
@@ -320,29 +320,30 @@ def LoadFiles():
 
 if __name__ == '__main__':
     dfData_all, Cycles_list = LoadFiles()
-    
-    plt.figure(figsize=(12, 6))
-    
-    # Plot Position vs Time
-    plt.subplot(2, 1, 1)
-    plt.plot(dfData_all['Time'], dfData_all['Position'], label='Position', color='blue')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Position (mm)')
-    plt.title('Position vs Time')
-    plt.grid(True)
-    plt.legend()
-    
-    # Plot Voltage vs Time
-    plt.subplot(2, 1, 2)
-    plt.plot(dfData_all['Time'], dfData_all['Voltage'], label='Voltage', color='red')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Voltage (V)')
-    plt.title('Voltage vs Time')
-    plt.grid(True)
-    plt.legend()
-    
-    plt.tight_layout()
-    plt.show()
+        
+    if not dfData_all.empty:
+        plt.figure(figsize=(12, 6))
+        
+        # Plot Position vs Time
+        plt.subplot(2, 1, 1)
+        plt.plot(dfData_all['Time'], dfData_all['Position'], label='Position', color='blue')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Position (mm)')
+        plt.title('Position vs Time')
+        plt.grid(True)
+        plt.legend()
+        
+        # Plot Voltage vs Time
+        plt.subplot(2, 1, 2)
+        plt.plot(dfData_all['Time'], dfData_all['Voltage'], label='Voltage', color='red')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Voltage (V)')
+        plt.title('Voltage vs Time')
+        plt.grid(True)
+        plt.legend()
+        
+        plt.tight_layout()
+        plt.show()
 
 
 
