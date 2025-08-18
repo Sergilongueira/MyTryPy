@@ -26,4 +26,4 @@ To load and process previously acquired and merged data:
 The function `LoadFiles` in `MyLoadData.py` returns:
 
 - `dfData_all`: a DataFrame containing all synchronized data from both files.
-- A list of DataFrames, each corresponding to the data of an individual cycle.
+- A list of DataFrames `Cycles_list`, each corresponding to the data of an individual cycle.
