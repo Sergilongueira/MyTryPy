@@ -1,7 +1,10 @@
+import os
 import logging
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import tkinter as tk
+from tkinter import filedialog
 
 # Configure logging
 logging.basicConfig(
@@ -32,17 +35,17 @@ DaqColumnsRenames = {
 # %% Load Motor RawData
 def LoadMotorFile(MotorFile):
     '''
-    Loads and processes a motor CSV file
+    Loads and processes a motor CSV file.
     
     Parameters
     ----------
     MotorFile : str
-        Path to the data file
+        Path to the data file.
     
     Returns
     -------
     pd.DataFrame or None
-        Processed motor data or None if there is an error
+        Processed motor data or None if there is an error.
     '''
     try:
         dfMot = pd.read_csv(MotorFile, header=0, index_col=False,
@@ -92,23 +95,21 @@ def LoadMotorFile(MotorFile):
     
     return dfMot
 
-dfMot = LoadMotorFile("Motor_01.csv")
-
 
 # %% Load DAQ RawData
 def LoadDAQFile(DaqFile):
     '''
-    Loads and processes a DAQ pickle file
+    Loads and processes a DAQ pickle file.
     
     Parameters
     ----------
     DaqFile : str
-        Path to the DAQ file
+        Path to the data file.
     
     Returns
     -------
     pd.DataFrame or None
-        Processed DAQ data or None if there is an error
+        Processed DAQ data or None if there is an error.
     '''
     try:
         dfDaq = pd.read_pickle(DaqFile)
@@ -125,7 +126,7 @@ def LoadDAQFile(DaqFile):
         if col not in dfDaq.columns:
             if col == 'Current':
                 dfDaq.insert(2, 'Current', None)
-                logging.warning(f'Column {col} not found in {DaqFile}, filled with None')
+                logging.warning(f'Column {col} not found in {DaqFile}, filled with None.')
             else:
                 logging.error(f'Column {col} not found in {DaqFile}')
                 return None
@@ -152,23 +153,21 @@ def LoadDAQFile(DaqFile):
     
     return dfDaq
 
-dfDaq = LoadDAQFile('DAQ_01.pkl')
-
 
 # %% Find Cycles Function
 def FindCycles(state_series):
     '''
-    Identifies start and end indices of operational cycles based on state changes
+    Identifies start and end indices of operational cycles based on state changes.
     
     Parameters
     ----------
     state_series : pd.Series
-        Series of state values
+        Series of state values.
     
     Returns
     -------
     list of [start, end]
-        List of cycles represented by their star and end indices
+        List of cycles represented by their star and end indices.
     '''
     cycles = []
     prev_state = state_series.iloc[0]
@@ -192,19 +191,19 @@ def FindCycles(state_series):
 
 
 # %% Load Files
-def LoadFiles(dfMot, dfDaq):
+def LoadFiles():
     '''
-    Loads and synchronizes Motor and DAQ data files, returning combined cycles data
+    Loads and synchronizes Motor and DAQ data files, returning combined cycles data.
     
     Parameters
     ----------
     ExpDef : object
-        An object with attributes 'MotorFile' and 'DaqFile' which correspond to file paths
+        An object with attributes 'MotorFile' and 'DaqFile' which correspond to file paths.
     
     Returns
     -------
     tuple (pd.DataFrame, list)
-        Combined data of all cycles and a list of (cicles_index, DataFrame) tuples
+        Combined data of all cycles and a list of (cicles_index, DataFrame) tuples.
     '''
     # if not os.path.isfile(ExpDef.MotorFile):
     #     logging.error(f'File {ExpDef.MotorFile} not found')
@@ -225,6 +224,29 @@ def LoadFiles(dfMot, dfDaq):
     #     logging.error(f'DAQ file {ExpDef.DaqFile} could not be processed')
     #     return None
     
+    print("Please select the folder where the data files are stored.")
+    root = tk.Tk()
+    root.withdraw()
+    root.lift()
+    root.attributes('-topmost', True)
+    
+    path = filedialog.askdirectory()
+    
+    if path:
+        path = path.replace("/", "\\")
+        
+        for f in os.listdir(path):
+            full_path = os.path.join(path, f)
+            if f == 'Motor_01.csv':
+                print(f"Loading motor data file: {full_path}")
+                dfMot = LoadMotorFile(full_path)
+            elif f == 'DAQ_01.pkl':
+                print(f"Loading DAQ data file: {full_path}")
+                dfDaq = LoadDAQFile(full_path)
+    else:
+        print("No folder was selected. Operation cancelled.")
+        return
+
     # Motor sampling rate
     MotFs = 1 / dfMot['Time'].diff().mean()
     print(f'Motor sampling rate: {MotFs}')
@@ -237,7 +259,7 @@ def LoadFiles(dfMot, dfDaq):
     MotCycles = FindCycles(dfMot['State'])
     DaqCycles = FindCycles(dfDaq['State'])
     if len(MotCycles) != len(DaqCycles):
-        logging.warning(f'Different number of cycles: Motor={len(MotCycles)}, DAQ={len(DaqCycles)}. Using minimum')
+        logging.warning(f'Different number of cycles: Motor={len(MotCycles)}, DAQ={len(DaqCycles)}. Using minimum.')
     nCycles = min(len(MotCycles), len(DaqCycles))
     
     Cycles = []
@@ -293,12 +315,12 @@ def LoadFiles(dfMot, dfDaq):
     
     return dfData_all, Cycles_list
 
-dfData_all, Cycles_list = LoadFiles(dfMot, dfDaq)
 
-
-# %% Plot Position and Voltage
+# %% Load Stored Data And Plot Position and Voltage
 
 if __name__ == '__main__':
+    dfData_all, Cycles_list = LoadFiles()
+    
     plt.figure(figsize=(12, 6))
     
     # Plot Position vs Time

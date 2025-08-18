@@ -44,7 +44,7 @@ def CSV_merge(folder_path: str, save_path_folder: str, filename: str):
     combined_DataFrame = pd.DataFrame()
 
     # Iterate the CSV files found in the folder path
-    print("Merging...")
+    print("\nMerging...")
     for file in files:
         # Read CSV
         df = pd.read_csv(os.path.join(folder_path, file), header=0, 
@@ -81,7 +81,7 @@ def Pickle_merge(folder_path: str, save_path_folder: str, filename: str):
     combined_DataFrame = pd.DataFrame()
 
     # Iterate the Excel files found in the folder path
-    print("Merging...")
+    print("\nMerging...")
     for file in files:
         # Read Excel
         df = pd.read_pickle(os.path.join(folder_path, file))
@@ -122,4 +122,4 @@ if __name__ == "__main__":
         Pickle_merge(folder_path=carpeta, save_path_folder=carpeta, filename="DAQ_01")
 
     else:
-        print("Canceled")
+        print("Canceled.")
