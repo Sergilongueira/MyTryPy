@@ -3,7 +3,6 @@ import os
 import re
 import tkinter as tk
 from tkinter import filedialog
-import logging
 
 def LTIME_to_seconds(LTIME):
     
@@ -45,13 +44,13 @@ def CSV_merge(folder_path: str, save_path_folder: str, filename: str):
     combined_DataFrame = pd.DataFrame()
 
     # Iterate the CSV files found in the folder path
-    logging.info("\nMerging...")
+    print("\nMerging...")
     for file in files:
         # Read CSV
         df = pd.read_csv(os.path.join(folder_path, file), header=0, 
                          index_col=False, delimiter=';', decimal='.')
 
-        logging.info(file)
+        print(file)
 
         # Concatenate CSV file
         combined_DataFrame = pd.concat([combined_DataFrame, df], ignore_index=True)
@@ -62,7 +61,7 @@ def CSV_merge(folder_path: str, save_path_folder: str, filename: str):
     # Save concatenated DataFrame
     combined_DataFrame.to_csv(os.path.join(save_path_folder, filename + ".csv"), index=False)
     
-    logging.info("Data saved to location:", os.path.join(save_path_folder, filename + ".csv"))
+    print("Data saved to location:", os.path.join(save_path_folder, filename + ".csv"))
 
     return
 
@@ -82,12 +81,12 @@ def Pickle_merge(folder_path: str, save_path_folder: str, filename: str):
     combined_DataFrame = pd.DataFrame()
 
     # Iterate the Excel files found in the folder path
-    logging.info("\nMerging...")
+    print("\nMerging...")
     for file in files:
         # Read Excel
         df = pd.read_pickle(os.path.join(folder_path, file))
 
-        logging.info(file)
+        print(file)
 
         # Concatenate CSV file
         combined_DataFrame = pd.concat([combined_DataFrame, df], ignore_index=True)
@@ -95,7 +94,7 @@ def Pickle_merge(folder_path: str, save_path_folder: str, filename: str):
     # Save concatenated DataFrame
     combined_DataFrame.to_pickle(os.path.join(save_path_folder, filename + ".pkl"))
     
-    logging.info("Data saved to location:", os.path.join(save_path_folder, filename + ".pkl"))
+    print("Data saved to location:", os.path.join(save_path_folder, filename + ".pkl"))
 
     return
 
@@ -107,7 +106,7 @@ def Files_merge(folder_path:str, save_path_folder:str):
 
 if __name__ == "__main__":
     # Get file save location from user:
-    logging.info("Please provide a save location for incoming data.")
+    print("Please provide a save location for incoming data.")
     root = tk.Tk()
     root.withdraw()  # Amaga la finestra princial de tkinter
     root.lift()  # Posa la finestra emergent en primer pla
@@ -123,4 +122,4 @@ if __name__ == "__main__":
         Pickle_merge(folder_path=carpeta, save_path_folder=carpeta, filename="DAQ_01")
 
     else:
-        logging.info("Canceled.")
+        print("Canceled.")
