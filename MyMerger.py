@@ -91,6 +91,8 @@ def Pickle_merge(folder_path: str, save_path_folder: str, filename: str):
         # Concatenate CSV file
         combined_DataFrame = pd.concat([combined_DataFrame, df], ignore_index=True)
     
+    combined_DataFrame['Time(s)'] = combined_DataFrame['Time(s)'] - combined_DataFrame['Time(s)'].iloc[0]
+    
     # Save concatenated DataFrame
     combined_DataFrame.to_pickle(os.path.join(save_path_folder, filename + ".pkl"))
     

@@ -9,8 +9,18 @@ from tkinter import filedialog
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(levelname)s: %(message)s'
+    format="%(levelname)s: %(message)s"
 )
+
+REQ_LEVEL = 25
+logging.addLevelName(REQ_LEVEL, "REQ")
+
+def req(self, message, *args, **kwargs):
+    if self.isEnabledFor(REQ_LEVEL):
+        self._log(REQ_LEVEL, message, args, **kwargs)
+
+logging.Logger.req = req
+logger = logging.getLogger(__name__)
 
 
 # %% Rename RawData Columns
@@ -51,7 +61,7 @@ def LoadMotorFile(MotorFile):
         dfMot = pd.read_csv(MotorFile, header=0, index_col=False,
                             delimiter=',', decimal='.')
     except Exception as e:
-        logging.error(f'Error reading motor file {MotorFile}: {e}')
+        logging.error(f'Error reading Motor file {MotorFile}: {e}')
         return None
     
     # Drop non-defined columns
@@ -205,26 +215,17 @@ def LoadFiles():
     tuple (pd.DataFrame, list)
         Combined data of all cycles and a list of (cicles_index, DataFrame) tuples.
     '''
-    # if not os.path.isfile(ExpDef.MotorFile):
-    #     logging.error(f'File {ExpDef.MotorFile} not found')
-    #     return None
-    # if not os.path.isfile(ExpDef.DaqFile):
-    #     logging.error(f'File {ExpDef.DaqFile} not found')
-    #     return None
-    
     # # Load Motor File
     # dfMot = LoadMotorFile(ExpDef.MotorFile)
     # if dfMot is None:
-    #     logging.error(f'Motor file {ExpDef.MotorFile} could not be processed')
-    #     return None
+    #     return pd.DataFrame(), []
     
     # # Load DAQ File
     # dfDaq = LoadDAQFile(ExpDef.DaqFile)
     # if dfDaq is None:
-    #     logging.error(f'DAQ file {ExpDef.DaqFile} could not be processed')
-    #     return None
+    #     return pd.DataFrame(), []
     
-    logging.info("Please select the folder where the data files are stored.")
+    logger.req("Please select the folder where the data files are stored.")
     root = tk.Tk()
     root.withdraw()
     root.lift()
@@ -233,8 +234,7 @@ def LoadFiles():
     path = filedialog.askdirectory()
     
     if path:
-        path = path.replace("/", "\\")
-        
+        path = os.path.normpath(path)
         for f in os.listdir(path):
             full_path = os.path.join(path, f)
             if f == 'Motor_01.csv':
@@ -245,7 +245,7 @@ def LoadFiles():
                 dfDaq = LoadDAQFile(full_path)
     else:
         logging.info("No folder was selected. Operation cancelled.")
-        return pd.DataFrame(), [[]]
+        return pd.DataFrame(), []
     
     # Motor sampling rate
     MotFs = 1 / dfMot['Time'].diff().mean()
