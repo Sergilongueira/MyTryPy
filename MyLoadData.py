@@ -201,7 +201,7 @@ def FindCycles(state_series):
 
 
 # %% Load Files
-def LoadFiles():
+def LoadFiles(MotorFile, DaqFile):
     '''
     Loads and synchronizes Motor and DAQ data files, returning combined cycles data.
     
@@ -215,37 +215,15 @@ def LoadFiles():
     tuple (pd.DataFrame, list)
         Combined data of all cycles and a list of (cicles_index, DataFrame) tuples.
     '''
-    # # Load Motor File
-    # dfMot = LoadMotorFile(ExpDef.MotorFile)
-    # if dfMot is None:
-    #     return pd.DataFrame(), []
+    # Load Motor File
+    dfMot = LoadMotorFile(MotorFile)
+    if dfMot is None:
+        return None, None
     
-    # # Load DAQ File
-    # dfDaq = LoadDAQFile(ExpDef.DaqFile)
-    # if dfDaq is None:
-    #     return pd.DataFrame(), []
-    
-    logger.req("Please select the folder where the data files are stored.")
-    root = tk.Tk()
-    root.withdraw()
-    root.lift()
-    root.attributes('-topmost', True)
-    
-    path = filedialog.askdirectory()
-    
-    if path:
-        path = os.path.normpath(path)
-        for f in os.listdir(path):
-            full_path = os.path.join(path, f)
-            if f == 'Motor_01.csv':
-                logging.info(f"Loading motor data file: {full_path}")
-                dfMot = LoadMotorFile(full_path)
-            elif f == 'DAQ_01.pkl':
-                logging.info(f"Loading DAQ data file: {full_path}")
-                dfDaq = LoadDAQFile(full_path)
-    else:
-        logging.info("No folder was selected. Operation cancelled.")
-        return pd.DataFrame(), []
+    # Load DAQ File
+    dfDaq = LoadDAQFile(DaqFile)
+    if dfDaq is None:
+        return None, None
     
     # Motor sampling rate
     MotFs = 1 / dfMot['Time'].diff().mean()
@@ -319,31 +297,50 @@ def LoadFiles():
 # %% Load Stored Data And Plot Position and Voltage
 
 if __name__ == '__main__':
-    dfData_all, Cycles_list = LoadFiles()
+    logger.req("Please select the folder where the data files are stored.")
+    root = tk.Tk()
+    root.withdraw()
+    root.lift()
+    root.attributes('-topmost', True)
+    path = filedialog.askdirectory()
+    
+    if path:
+        path = os.path.normpath(path)
+        for f in os.listdir(path):
+            full_path = os.path.join(path, f)
+            if f == 'Motor_01.csv':
+                MotorFile = full_path
+            elif f == 'DAQ_01.pkl':
+                DaqFile = full_path
         
-    if not dfData_all.empty:
-        plt.figure(figsize=(12, 6))
+        dfData_all, Cycles_list = LoadFiles(MotorFile, DaqFile)
         
-        # Plot Position vs Time
-        plt.subplot(2, 1, 1)
-        plt.plot(dfData_all['Time'], dfData_all['Position'], label='Position', color='blue')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Position (mm)')
-        plt.title('Position vs Time')
-        plt.grid(True)
-        plt.legend()
+        if Cycles_list:
+            plt.figure(figsize=(12, 6))
+            
+            # Plot Position vs Time
+            plt.subplot(2, 1, 1)
+            plt.plot(dfData_all['Time'], dfData_all['Position'], label='Position', color='blue')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Position (mm)')
+            plt.title('Position vs Time')
+            plt.grid(True)
+            plt.legend()
+            
+            # Plot Voltage vs Time
+            plt.subplot(2, 1, 2)
+            plt.plot(dfData_all['Time'], dfData_all['Voltage'], label='Voltage', color='red')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Voltage (V)')
+            plt.title('Voltage vs Time')
+            plt.grid(True)
+            plt.legend()
+            
+            plt.tight_layout()
+            plt.show()
+    else:
+        logging.info("No folder was selected. Operation cancelled.")
         
-        # Plot Voltage vs Time
-        plt.subplot(2, 1, 2)
-        plt.plot(dfData_all['Time'], dfData_all['Voltage'], label='Voltage', color='red')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Voltage (V)')
-        plt.title('Voltage vs Time')
-        plt.grid(True)
-        plt.legend()
-        
-        plt.tight_layout()
-        plt.show()
 
 
 
